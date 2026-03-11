@@ -6,8 +6,13 @@ import (
 
 func main() {
 
+	cfg, err := crawler.LoadConfig("config.yaml")
+	if err != nil {
+		return
+	}
+
 	crawler := crawler.Crawler{
-		StartDomain: "target.com",
+		Config: cfg,
 	}
 	crawler.StartCrawl()
 

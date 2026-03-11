@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/crawler
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources: {}
+
+env:
+  - name: KAFKA_BROKERS
+    value: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  - name: KAFKA_TOPIC
+    value: "crawler-pages"

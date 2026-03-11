@@ -1,0 +1,7 @@
+kafka:
+  brokers:
+    - kafka-cluster-kafka-bootstrap:9092
+  topic: crawler-pages
+
+crawler:
+  seed: target.com

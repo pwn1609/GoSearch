@@ -7,10 +7,10 @@ import (
 )
 
 type Crawler struct {
-	StartDomain      string
 	RetriesPerPage   int
 	RequestPerSecond int
 	Delay            time.Time
+	Config           *Config
 }
 
 func (s *Crawler) StartCrawl() {
@@ -19,7 +19,7 @@ func (s *Crawler) StartCrawl() {
 	seenHosts := make(map[string]int)
 	hosts := make(chan Host, 100)
 	startingHost := Host{
-		baseDomain: s.StartDomain,
+		baseDomain: s.Config.Crawler.SeedURL,
 		subDomains: make([]string, 0),
 		seen:       make(map[string]int),
 	}
@@ -49,6 +49,7 @@ func (s *Crawler) StartCrawl() {
 
 func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	err := getRobotsTxt(hos.baseDomain, hos)
 	if err != nil {
 		hos.errs = append(hos.errs, err.Error())
