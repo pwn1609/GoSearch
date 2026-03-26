@@ -1,6 +1,6 @@
 kafka:
   brokers:
-    - kafka-cluster-kafka-bootstrap:9092
+    - kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092
   topic: crawler-pages
 
 crawler:

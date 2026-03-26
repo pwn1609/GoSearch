@@ -5,7 +5,9 @@ If no registry running: docker run -d -p 5000:5000 --name registry registry:2
 
 docker build -t localhost:5000/crawler:0.1.0 -f ./cmd/crawler/Dockerfile .
 docker push localhost:5000/crawler:0.1.0
-helm install crawler
+helm install crawler ./charts/crawler
+
+uninstall - helm uninstall crawler
 
 kafka:
 kubectl create namespace kafka

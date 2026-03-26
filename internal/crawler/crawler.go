@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"fmt"
+	"io"
 	"sync"
 	"time"
 )
@@ -29,6 +30,10 @@ func (s *Crawler) StartCrawl() {
 		close(hosts)
 	}()
 
+	writer := NewKafkaProducer(s.Config.Kafka.Brokers[0], s.Config.Kafka.Topic)
+	fmt.Println(s.Config.Kafka.Brokers[0])
+	defer writer.Close()
+
 	hosts <- startingHost
 	i := 0
 	for host := range hosts {
@@ -37,7 +42,7 @@ func (s *Crawler) StartCrawl() {
 		if seenHosts[host.baseDomain] == 0 {
 			seenHosts[host.baseDomain] = 1
 			wg.Add(1)
-			go s.crawl(&host, hosts, &wg)
+			go s.crawl(&host, hosts, &wg, writer)
 		}
 		if i >= 10 {
 			break
@@ -47,7 +52,7 @@ func (s *Crawler) StartCrawl() {
 	wg.Wait()
 }
 
-func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup) {
+func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *KafkaProducer) {
 	defer wg.Done()
 
 	err := getRobotsTxt(hos.baseDomain, hos)
@@ -83,6 +88,16 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup) {
 			continue
 		}
 
+		bodyBytes, err := io.ReadAll(resp.Body)
+
+		//send url and body to kafka
+		if !writer.SendMessage(Message{
+			Key:   domain,
+			Value: string(bodyBytes), //need to determine if I should send full html page or just key pieces
+		}) {
+			fmt.Println("Failed to send Message to Kafka")
+		}
+
 		//get all href's
 		links := getLinksFromHTML(resp)
 		if links == nil {
@@ -101,6 +116,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup) {
 				fmt.Printf("Seen URL %s, %d \n", url, hos.seen[url])
 				continue
 			}
+
 			//if new host then create a new host and add to channel then finish ittr
 			new, newbase := isNewHost(hos.baseDomain, url)
 			if new {

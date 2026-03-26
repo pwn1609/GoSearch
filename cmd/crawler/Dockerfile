@@ -1,4 +1,4 @@
-from golang:1.25 AS builder
+FROM golang:1.25 AS builder
 
 WORKDIR /app
 
@@ -11,12 +11,13 @@ COPY internal/ ./internal/
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o crawler ./cmd/crawler
 
-FROM debian:bookworm-slim
+FROM alpine:latest
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /app/crawler .
+COPY cmd/crawler/config.yaml .
 
-cmd ["./crawler"]
+CMD ["./crawler"]
