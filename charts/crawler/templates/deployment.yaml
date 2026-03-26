@@ -1,19 +1,16 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: {{ include "crawler.fullname" . }}
   labels:
     app: {{ include "crawler.name" . }}
 spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ include "crawler.name" . }}
   template:
     metadata:
       labels:
         app: {{ include "crawler.name" . }}
     spec:
+      restartPolicy: OnFailure
       containers:
         - name: crawler
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

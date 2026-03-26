@@ -14,4 +14,19 @@ kubectl create namespace kafka
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update
 helm install strimzi strimzi/strimzi-kafka-operator -n kafka
+cd ../charts/kafka
 kubectl apply -f kafka-cluster.yaml
+kubectl apply -f kafka-nodepool.yaml
+kubectl apply -f crawler-topic.yaml
+
+Verify Kafka:
+kubectl describe kafka kafka-cluster -n kafka - Should see "strimzi-cluster-operator-xxxx   Running"
+kubectl get kafka -n kafka - Should see "kafka-cluster    True"
+ - If not: kubectl describe kafka kafka-cluster -n kafka
+kubectl get pods -n kafka - Should see:
+ - kafka-cluster-dual-role-0      Running
+ - kafka-cluster-entity-operator  Running
+ - strimzi-cluster-operator       Running
+kubectl get svc -n kafka - Should see: 
+ - kafka-cluster-kafka-bootstrap
+ - kafka-cluster-kafka-brokers

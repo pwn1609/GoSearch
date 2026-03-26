@@ -25,6 +25,7 @@ func (s *Crawler) StartCrawl() {
 		seen:       make(map[string]int),
 	}
 
+	wg.Add(1) // sentinel to prevent premature close
 	go func() {
 		wg.Wait()
 		close(hosts)
@@ -36,10 +37,13 @@ func (s *Crawler) StartCrawl() {
 
 	hosts <- startingHost
 	i := 0
+
 	for host := range hosts {
 		//skip if already seen
 		i++
+
 		if seenHosts[host.baseDomain] == 0 {
+			fmt.Printf("Crawling: %s\n", host.baseDomain)
 			seenHosts[host.baseDomain] = 1
 			wg.Add(1)
 			go s.crawl(&host, hosts, &wg, writer)
@@ -48,6 +52,13 @@ func (s *Crawler) StartCrawl() {
 			break
 		}
 	}
+	wg.Done() // release sentinel
+
+	// Drain the channel so crawl goroutines blocked on list <- newHost can finish
+	go func() {
+		for range hosts {
+		}
+	}()
 
 	wg.Wait()
 }
@@ -56,28 +67,32 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 	defer wg.Done()
 
 	err := getRobotsTxt(hos.baseDomain, hos)
+	fmt.Println("Got Robots.txt")
 	if err != nil {
 		hos.errs = append(hos.errs, err.Error())
+		fmt.Printf("Error: %s \n", err)
 	}
 	if hos.disallowAll {
 		return
 	}
 
 	hos.subDomains = append(hos.subDomains, hos.baseDomain)
-
+	fmt.Println("Starting subdomain crawl")
 	for i := 0; i < len(hos.subDomains); i++ {
 		//temporary break - only crawl first 30 pages of a host
 		if i > 30 {
 			break
 		}
-
+		// fmt.Printf("Looping subdomains: %d \n", i)
 		time.Sleep(time.Second) //add * craw delay logic
 		domain := hos.subDomains[i]
 		hos.seen[domain] += 1
 
 		resp, err := fetch(domain)
+		fmt.Printf("Fetched Subdomain: %s \n", domain)
+		//Error comes after this somewhere
 		if err != nil {
-			fmt.Printf("Error in get request: %s", err.Error())
+			fmt.Printf("Error in get request: %s \n", err.Error())
 			hos.errs = append(hos.errs, err.Error())
 			continue
 		}

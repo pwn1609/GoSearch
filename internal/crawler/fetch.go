@@ -2,7 +2,7 @@ package crawler
 
 import (
 	"bufio"
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -44,35 +44,59 @@ func fetch(raw string) (*http.Response, error) {
 }
 
 func getRobotsTxt(baseDom string, hos *Host) error {
+	if !strings.HasPrefix(baseDom, "http://") && !strings.HasPrefix(baseDom, "https://") {
+		baseDom = "https://" + baseDom
+	}
+
 	urlRes, err := url.JoinPath(baseDom, "/robots.txt")
 	if err != nil {
-		return errors.New("Errors resolving robots.txt")
+		return fmt.Errorf("getRobotsTxt: failed to build URL for %q: %w", baseDom, err)
 	}
+	fmt.Printf("getRobotsTxt: fetching %s\n", urlRes)
+
 	res, err := http.Get(urlRes)
 	if err != nil {
-		return errors.New("Error getting robots.txt")
+		return fmt.Errorf("getRobotsTxt: HTTP request to %q failed: %w", urlRes, err)
 	}
+	defer res.Body.Close()
+	fmt.Printf("getRobotsTxt: got status %d from %s\n", res.StatusCode, urlRes)
+
 	switch res.StatusCode {
-	case 401:
-	case 403:
+	case 401, 403:
+		fmt.Printf("getRobotsTxt: %d response, disallowing all for %s\n", res.StatusCode, baseDom)
 		hos.disallowAll = true
 		return nil
+	case 404:
+		fmt.Printf("getRobotsTxt: no robots.txt found for %s, proceeding\n", baseDom)
+		return nil
 	}
+
 	scanner := bufio.NewScanner(res.Body)
+	lineNum := 0
 	for scanner.Scan() {
+		lineNum++
 		line := scanner.Text()
+		fmt.Printf("getRobotsTxt: line %d: %q\n", lineNum, line)
 		if line == "" || line[0] == '#' {
 			continue
 		}
-		splitLine := strings.Split(line, ":")
-		switch strings.ToLower(splitLine[0]) {
+		splitLine := strings.SplitN(line, ":", 2)
+		if len(splitLine) < 2 {
+			fmt.Printf("getRobotsTxt: skipping malformed line %d: %q\n", lineNum, line)
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(splitLine[0])) {
 		case "disallow":
-			hos.disallowed = append(hos.disallowed, splitLine[1])
-		case "allowed":
-			hos.allowed = append(hos.disallowed, splitLine[1])
+			hos.disallowed = append(hos.disallowed, strings.TrimSpace(splitLine[1]))
+		case "allow":
+			hos.allowed = append(hos.allowed, strings.TrimSpace(splitLine[1]))
 		case "crawl-delay":
-			hos.delay = splitLine[1]
+			hos.delay = strings.TrimSpace(splitLine[1])
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("getRobotsTxt: error reading body from %q: %w", urlRes, err)
+	}
+	fmt.Printf("getRobotsTxt: done parsing %s — disallowed=%v allowed=%v\n", baseDom, hos.disallowed, hos.allowed)
 	return nil
 }
