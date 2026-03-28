@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func fetch(raw string) (*http.Response, error) {
@@ -38,7 +39,7 @@ func fetch(raw string) (*http.Response, error) {
 	// Set a User-Agent (important for crawlers)
 	req.Header.Set("User-Agent", "MyCrawler/1.0")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 15 * time.Second}
 
 	return client.Do(req)
 }
@@ -54,12 +55,12 @@ func getRobotsTxt(baseDom string, hos *Host) error {
 	}
 	fmt.Printf("getRobotsTxt: fetching %s\n", urlRes)
 
-	res, err := http.Get(urlRes)
+	client := &http.Client{Timeout: 15 * time.Second}
+	res, err := client.Get(urlRes)
 	if err != nil {
 		return fmt.Errorf("getRobotsTxt: HTTP request to %q failed: %w", urlRes, err)
 	}
 	defer res.Body.Close()
-	fmt.Printf("getRobotsTxt: got status %d from %s\n", res.StatusCode, urlRes)
 
 	switch res.StatusCode {
 	case 401, 403:
@@ -76,7 +77,6 @@ func getRobotsTxt(baseDom string, hos *Host) error {
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Text()
-		fmt.Printf("getRobotsTxt: line %d: %q\n", lineNum, line)
 		if line == "" || line[0] == '#' {
 			continue
 		}
@@ -97,6 +97,5 @@ func getRobotsTxt(baseDom string, hos *Host) error {
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("getRobotsTxt: error reading body from %q: %w", urlRes, err)
 	}
-	fmt.Printf("getRobotsTxt: done parsing %s — disallowed=%v allowed=%v\n", baseDom, hos.disallowed, hos.allowed)
 	return nil
 }

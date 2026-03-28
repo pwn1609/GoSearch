@@ -39,7 +39,7 @@ func NewKafkaProducer(address, topic string) *KafkaProducer {
 func (p *KafkaProducer) SendMessage(mess Message) bool {
 	msg := Message{
 		Key:   mess.Key,
-		Value: "sent",
+		Value: mess.Value,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

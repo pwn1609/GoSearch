@@ -25,7 +25,6 @@ func (s *Crawler) StartCrawl() {
 		seen:       make(map[string]int),
 	}
 
-	wg.Add(1) // sentinel to prevent premature close
 	go func() {
 		wg.Wait()
 		close(hosts)
@@ -35,6 +34,7 @@ func (s *Crawler) StartCrawl() {
 	fmt.Println(s.Config.Kafka.Brokers[0])
 	defer writer.Close()
 
+	wg.Add(1)
 	hosts <- startingHost
 	i := 0
 
@@ -45,18 +45,20 @@ func (s *Crawler) StartCrawl() {
 		if seenHosts[host.baseDomain] == 0 {
 			fmt.Printf("Crawling: %s\n", host.baseDomain)
 			seenHosts[host.baseDomain] = 1
-			wg.Add(1)
 			go s.crawl(&host, hosts, &wg, writer)
+		} else {
+			wg.Done()
 		}
 		if i >= 10 {
 			break
 		}
 	}
-	wg.Done() // release sentinel
 
-	// Drain the channel so crawl goroutines blocked on list <- newHost can finish
+	// Drain the channel so crawl goroutines blocked on list <- newHost can finish.
+	// Each drained item must release its wg count since the main loop won't process it.
 	go func() {
 		for range hosts {
+			wg.Done()
 		}
 	}()
 
@@ -124,6 +126,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 		//append new domains to list
 		for i, url := range links {
 			//only grab the first 10 links from a page
+
 			if i > 10 {
 				break
 			}
@@ -131,7 +134,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 				fmt.Printf("Seen URL %s, %d \n", url, hos.seen[url])
 				continue
 			}
-
+			fmt.Println("Temp 0")
 			//if new host then create a new host and add to channel then finish ittr
 			new, newbase := isNewHost(hos.baseDomain, url)
 			if new {
@@ -141,9 +144,11 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 					subDomains: make([]string, 0),
 					seen:       make(map[string]int),
 				}
+				wg.Add(1)
 				list <- newHost
 				continue
 			}
+			fmt.Println("Temp 1")
 			//check if in disallowed
 			hos.subDomains = append(hos.subDomains, url)
 
