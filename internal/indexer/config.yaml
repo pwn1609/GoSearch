@@ -1,0 +1,10 @@
+kafka:
+  brokers:
+    - kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092
+  topic: crawler-pages
+  group_id: indexer-consumer-group
+
+elasticsearch:
+  host: elasticsearch-master.elastic.svc.cluster.local
+  port: 9200
+  index: pages

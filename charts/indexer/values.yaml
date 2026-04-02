@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/indexer
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources: {}
+
+config:
+  kafka:
+    brokers: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+    topic: "crawler-pages"
+    groupId: "indexer-consumer-group"
+  elasticsearch:
+    host: "elasticsearch-master.elastic.svc.cluster.local"
+    port: 9200
+    index: "pages"

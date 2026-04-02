@@ -3,7 +3,6 @@ package crawler
 import (
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 )
@@ -87,7 +86,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 		}
 
 		time.Sleep(time.Second) //add * craw delay logic
-		domain := strings.TrimRight(hos.subDomains[i], "/")
+		domain := hos.subDomains[i]
 		hos.seen[domain] += 1
 
 		resp, err := fetch(domain)
@@ -125,8 +124,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 		//determine if subdomain has been seen and determine if new host
 		//append new domains to list
 		for _, url := range links {
-			//only grab the first 10 links from a page
-			url = strings.TrimRight(url, "/")
+
 			if hos.seen[url] > 0 {
 				continue
 			}
