@@ -3,6 +3,7 @@ package crawler
 import (
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 )
@@ -79,15 +80,14 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 	}
 
 	hos.subDomains = append(hos.subDomains, hos.baseDomain)
-	fmt.Println("Starting subdomain crawl")
 	for i := 0; i < len(hos.subDomains); i++ {
 		//temporary break - only crawl first 30 pages of a host
 		if i > 30 {
 			break
 		}
-		// fmt.Printf("Looping subdomains: %d \n", i)
+
 		time.Sleep(time.Second) //add * craw delay logic
-		domain := hos.subDomains[i]
+		domain := strings.TrimRight(hos.subDomains[i], "/")
 		hos.seen[domain] += 1
 
 		resp, err := fetch(domain)
@@ -116,7 +116,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 		}
 
 		//get all href's
-		links := getLinksFromHTML(resp)
+		links := getLinksFromHTML(resp, bodyBytes)
 		if links == nil {
 			fmt.Printf("No links grabbed for %s \n", domain)
 			continue
@@ -124,17 +124,12 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 
 		//determine if subdomain has been seen and determine if new host
 		//append new domains to list
-		for i, url := range links {
+		for _, url := range links {
 			//only grab the first 10 links from a page
-
-			if i > 10 {
-				break
-			}
+			url = strings.TrimRight(url, "/")
 			if hos.seen[url] > 0 {
-				fmt.Printf("Seen URL %s, %d \n", url, hos.seen[url])
 				continue
 			}
-			fmt.Println("Temp 0")
 			//if new host then create a new host and add to channel then finish ittr
 			new, newbase := isNewHost(hos.baseDomain, url)
 			if new {
@@ -148,8 +143,9 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 				list <- newHost
 				continue
 			}
-			fmt.Println("Temp 1")
-			//check if in disallowed
+			if isDisallowed(url, hos.disallowed) {
+				continue
+			}
 			hos.subDomains = append(hos.subDomains, url)
 
 		}

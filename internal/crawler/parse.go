@@ -1,18 +1,21 @@
 package crawler
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"net/url"
+	urlpkg "net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-func getLinksFromHTML(resp *http.Response) []string {
+func getLinksFromHTML(resp *http.Response, body []byte) []string {
 
 	urls := make([]string, 0)
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
 	if err != nil {
 		return nil
 	}
@@ -33,4 +36,18 @@ func getLinksFromHTML(resp *http.Response) []string {
 		}
 	})
 	return urls
+}
+
+func isDisallowed(rawURL string, patterns []string) bool {
+	parsed, err := urlpkg.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	for _, pattern := range patterns {
+		if pattern != "" && strings.HasPrefix(parsed.Path, pattern) {
+			fmt.Printf("isDisallowed: %s matched pattern %q\n", rawURL, pattern)
+			return true
+		}
+	}
+	return false
 }
