@@ -110,7 +110,7 @@ func (s *Crawler) crawl(hos *Host, list chan Host, wg *sync.WaitGroup, writer *K
 		//send url and body to kafka
 		if !writer.SendMessage(Message{
 			Key:   domain,
-			Value: string(bodyBytes), //need to determine if I should send full html page or just key pieces
+			Value: string(bodyBytes),
 		}) {
 			fmt.Println("Failed to send Message to Kafka")
 		}
