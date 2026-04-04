@@ -30,3 +30,34 @@ kubectl get pods -n kafka - Should see:
 kubectl get svc -n kafka - Should see: 
  - kafka-cluster-kafka-bootstrap
  - kafka-cluster-kafka-brokers
+
+ElasticSearch:
+helm repo add elastic https://helm.elastic.co
+helm repo update
+helm install elastic-operator elastic/eck-operator -n elastic-system --create-namespace
+kubectl create namespace elastic-stack
+kubectl apply -f ./charts/elasticsearch/elasticsearch.yaml
+
+Verify ElasticSearch:
+kubectl get elasticsearch -n elastic-stack
+kubectl get pods -n elastic-stack
+kubectl get svc -n elastic-stack
+kubectl get pvc -n elastic-stack
+
+
+Indexer should create the index
+curl -X PUT http://quickstart-es-http:9200/web-pages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mappings": {
+      "properties": {
+        "url":        { "type": "keyword" },
+        "domain":     { "type": "keyword" },
+        "title":      { "type": "text" },
+        "headings": { "type": "text" },
+        "content":    { "type": "text" },
+        "timestamp":  { "type": "date" },
+        "status_code":{ "type": "integer" }
+      }
+    }
+  }'
