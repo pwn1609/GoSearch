@@ -8,11 +8,17 @@
 #Process Data
 #Post to elastic search
 
-
+from config import Config
+from elasticsearchclient import ESClient
 
 def main():
-    return
 
+    #init config
+    filepath = "./internal/indexer/config.py"
+    config = Config(filepath)
+    es = ESClient(config.es_host, config.es_index)
+
+    print(es.info())
 
 
 if __name__ == "__main__":
