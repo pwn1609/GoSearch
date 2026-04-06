@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/indexer
+  tag: latest
+  pullPolicy: IfNotPresent
+
+configMap:
+  name: indexer-config
+
+nameOverride: ""
+fullnameOverride: ""

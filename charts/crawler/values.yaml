@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: localhost:5000/crawler
-  tag: "0.1.0"
+  tag: "latest"
   pullPolicy: IfNotPresent
 
 nameOverride: ""

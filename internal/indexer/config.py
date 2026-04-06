@@ -6,22 +6,19 @@ class Config:
         self.config_map = self.open_config_file(filepath)
         self.set_config_values()
 
-
     def open_config_file(self, filepath):
-        
         with open(filepath) as f:
-            config = yaml.safe_load(f)
-        
-        return config
+            return yaml.safe_load(f)
 
     def set_config_values(self):
-        
-        self.es_host = self.config_map.get("elasticsearch", "host", fallback=None)
-        if self.es_host == None:
+        es_config = self.config_map.get("elasticsearch", {})
+
+        self.es_host = es_config.get("host")
+        if self.es_host is None:
             raise ValueError("Config Missing Elastic Search Host")
-        
-        self.es_index = self.config_map.get("elasticsearch", "index", fallback=None)
-        if self.es_index == None:
+
+        self.es_index = es_config.get("index")
+        if self.es_index is None:
             raise ValueError("Config Missing Elastic Search Index")
         
         

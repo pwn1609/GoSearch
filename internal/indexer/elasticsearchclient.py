@@ -1,4 +1,4 @@
-from elasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 class ESClient:
     def __init__(self, host, index):
@@ -6,7 +6,7 @@ class ESClient:
         self.index = index
 
     def init_connection(self, host):
-        return ElasticSearch(host)
+        return Elasticsearch(host)
 
     # def post_index(self):
         

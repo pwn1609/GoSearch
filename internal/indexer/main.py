@@ -14,7 +14,7 @@ from elasticsearchclient import ESClient
 def main():
 
     #init config
-    filepath = "./internal/indexer/config.py"
+    filepath = "/app/config/indexer_config.yaml"
     config = Config(filepath)
     es = ESClient(config.es_host, config.es_index)
 

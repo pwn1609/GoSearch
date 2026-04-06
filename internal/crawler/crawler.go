@@ -1,5 +1,8 @@
 package crawler
 
+//TODO:
+//Change Dockerfile so its not copying in the entire interal and cmd directory
+
 import (
 	"fmt"
 	"io"

@@ -3,11 +3,22 @@
 *Deployment steps*
 If no registry running: docker run -d -p 5000:5000 --name registry registry:2
 
-docker build -t localhost:5000/crawler:0.1.0 -f ./cmd/crawler/Dockerfile .
-docker push localhost:5000/crawler:0.1.0
+Crawler:
+docker build -t localhost:5000/latest -f ./cmd/crawler/Dockerfile .
+docker push localhost:5000/latest
 helm install crawler ./charts/crawler
 
 uninstall - helm uninstall crawler
+
+Indexer:
+kubectl create configmap indexer-config --from-file=./internal/indexer/indexer_config.yaml
+ - kubectl delete configmap indexer-config
+
+docker build -t localhost:5000/indexer:latest -f ./internal/indexer/Dockerfile .
+docker push localhost:5000/indexer:latest
+
+helm install indexer ./charts/indexer
+
 
 kafka:
 kubectl create namespace kafka
