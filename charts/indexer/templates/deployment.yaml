@@ -23,6 +23,17 @@ spec:
         - name: {{ include "indexer.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: indexer-es-credentials
+                  key: username
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: indexer-es-credentials
+                  key: password
           volumeMounts:
             - name: config
               mountPath: /app/config

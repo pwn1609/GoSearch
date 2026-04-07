@@ -1,3 +1,4 @@
+import os
 import yaml
 
 class Config:
@@ -20,8 +21,6 @@ class Config:
         self.es_index = es_config.get("index")
         if self.es_index is None:
             raise ValueError("Config Missing Elastic Search Index")
-        
-        
 
-
-            
+        self.es_username = os.environ.get("ES_USERNAME")
+        self.es_password = os.environ.get("ES_PASSWORD")

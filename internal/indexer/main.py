@@ -16,9 +16,9 @@ def main():
     #init config
     filepath = "/app/config/indexer_config.yaml"
     config = Config(filepath)
-    es = ESClient(config.es_host, config.es_index)
+    es = ESClient(config.es_host, config.es_index, config.es_username, config.es_password)
 
-    print(es.info())
+    print(es.client.info())
 
 
 if __name__ == "__main__":
