@@ -10,15 +10,24 @@
 
 from config import Config
 from elasticsearchclient import ESClient
+from processor import Processor
+from consumer import Consumer
 
 def main():
-
+    
     #init config
     filepath = "/app/config/indexer_config.yaml"
     config = Config(filepath)
+    #init Elasticsearch
     es = ESClient(config.es_host, config.es_index, config.es_username, config.es_password)
+    es.ensure_index()
 
-    print(es.client.info())
+    #init kafka consumer
+    kaf = Consumer(config.kfk_brokers, config.kfk_topic)
+    
+    #init processor
+    proc = Processor(es, kaf)
+    proc.pull_messages()
 
 
 if __name__ == "__main__":

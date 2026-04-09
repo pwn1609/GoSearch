@@ -14,11 +14,9 @@ Indexer:
 - kubectl create configmap indexer-config --from-file=./internal/indexer/indexer_config.yaml
  - kubectl delete configmap indexer-config
 
-kubectl create secret generic indexer-es-credentials \
-  --from-literal=username=elastic \
-  --from-literal=password=<password>
- - Get password: kubectl get secret elastic-es-elastic-user -n elasticsearch -o jsonpath='{.data.elastic}' | base64 -d
- - kubectl delete secret indexer-es-credentials
+ - kubectl create secret generic indexer-es-credentials --from-literal=username=elastic --from-literal=password=<password>
+  - Get password: kubectl get secret elastic-es-elastic-user -n elasticsearch -o jsonpath='{.data.elastic}' | base64 -d
+  - kubectl delete secret indexer-es-credentials
 
 - docker build -t localhost:5000/indexer:latest -f ./internal/indexer/Dockerfile .
 - docker push localhost:5000/indexer:latest
